@@ -21,24 +21,34 @@ export class AuthService {
   ) {}
 
   async signIn(email: string, pass: string) {
-    const user = await this.usersService.findOneByEmail(email);
+    try {
+      const user = await this.usersService.findOneByEmail(email);
 
-    if (!user || !(await bcrypt.compare(pass, user.password))) {
-      throw new UnauthorizedException();
-    }
+      if (!user) {
+        throw new UnauthorizedException('Email incorrect');
+      }
 
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      username: user.username,
-      color: user.color ?? undefined,
-    };
+      const passwordMatches = await bcrypt.compare(pass, user.password);
+      if (!passwordMatches) {
+        throw new UnauthorizedException('Mot de passe incorrect');
+      }
 
-    return {
-      access_token: await this.jwtService.signAsync(payload, {
+      const payload: JwtPayload = {
+        sub: user.id,
+        email: user.email,
+        username: user.username,
+        color: user.color ?? undefined,
+      };
+
+      const token = await this.jwtService.signAsync(payload, {
         secret: process.env.JWT_SECRET,
-      }),
-    };
+      });
+
+      return { access_token: token };
+    } catch (error) {
+      console.error('Erreur dans signIn:', error);
+      throw error;
+    }
   }
 
   async register(registerDto: RegisterDto) {

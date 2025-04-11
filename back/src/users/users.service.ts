@@ -23,7 +23,6 @@ export class UsersService {
       skip: (page - 1) * limit,
       take: limit,
     });
-
     return { data, page, limit };
   }
 
@@ -33,8 +32,22 @@ export class UsersService {
     });
   }
 
-  // Exemples (commentés) :
-  // create(...) { ... }
-  // update(...) { ... }
-  // delete(...) { ... }
+  findOneById(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
+  async updateUser(id: string, data: Partial<User>): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteUser(id: string): Promise<User> {
+    return this.prisma.user.delete({
+      where: { id },
+    });
+  }
 }
