@@ -2,14 +2,18 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
+import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { authContext } from "@/context/authContext";
-import { ModeToggle } from "./modeToggle";
+import { ModeToggle } from "@/components/modeToggle";
+import { MessageSquare } from "lucide-react";
 
 export default function Navbar() {
   const { user, setUser } = React.useContext(authContext);
   const router = useRouter();
+  const pathname = usePathname();
+
+  if (pathname.startsWith('/chat')) return null;
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -45,7 +49,12 @@ export default function Navbar() {
           ) : (
             <>
               <li className="text-sm">
-                Bonjour, <span className="font-semibold">{user.username}</span>
+                <Button asChild>
+                  <Link href="/chat">
+                    <MessageSquare />
+                    <span>Chat with people!</span>                  
+                  </Link>
+                </Button>
               </li>
               <li>
                 <Button variant="destructive" onClick={handleLogout}>

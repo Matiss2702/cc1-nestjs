@@ -2,13 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
-export class ChatService {
+export class MessageService {
   constructor(private prisma: PrismaService) {}
 
-  async createMessage(senderId: string, content: string) {
+  async createMessage({
+    chatId,
+    senderId,
+    content,
+  }: {
+    chatId: string;
+    senderId: string;
+    content: string;
+  }) {
     return this.prisma.message.create({
       data: {
         content,
+        chatId,
         senderId,
       },
       include: {
@@ -16,24 +25,15 @@ export class ChatService {
           select: {
             id: true,
             username: true,
+            email: true,
             color: true,
           },
         },
-      },
-    });
-  }
-
-  async getMessages() {
-    return this.prisma.message.findMany({
-      orderBy: {
-        createdAt: 'asc',
-      },
-      include: {
-        sender: {
+        chat: {
           select: {
             id: true,
-            username: true,
-            color: true,
+            name: true,
+            is_group: true,
           },
         },
       },
