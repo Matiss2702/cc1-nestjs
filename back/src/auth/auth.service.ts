@@ -53,7 +53,9 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-    return this.prisma.user.create({
+
+    // Crée le nouvel utilisateur
+    const newUser = await this.prisma.user.create({
       data: {
         email: registerDto.email,
         username: registerDto.username,
@@ -67,5 +69,44 @@ export class AuthService {
         color: true,
       },
     });
+
+    /* 
+    Création d'un chat 1v1 avec chaque utilisateur existant
+    */
+    // Récupère tous les autres utilisateurs
+    const otherUsers = await this.prisma.user.findMany({
+      where: {
+        id: {
+          not: newUser.id,
+        },
+      },
+      select: {
+        id: true,
+        username: true,
+      },
+    });
+
+    // Crée un chat 1v1 avec chaque utilisateur existant
+    await Promise.all(
+      otherUsers.map((otherUser) =>
+        this.prisma.chat.create({
+          data: {
+            is_group: false,
+            name: `Chat ${newUser.username} - ${otherUser.username}`,
+            members: {
+              create: [
+                {
+                  userId: newUser.id,
+                },
+                {
+                  userId: otherUser.id,
+                },
+              ],
+            },
+          },
+        }),
+      ),
+    );
+    return newUser;
   }
 }

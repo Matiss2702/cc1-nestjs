@@ -57,11 +57,13 @@ export default function LoginPage() {
       localStorage.setItem("token", token);
 
       const decoded = jwtDecode<JwtPayload>(token);
+            
       const user: User = {
         id: decoded.sub,
         email: decoded.email,
         username: decoded.username,
         color: decoded.color ?? "#FFFFFF",
+        sub: decoded.sub,
       };
       setUser(user);
 
@@ -69,7 +71,7 @@ export default function LoginPage() {
         description: "Vous êtes maintenant connecté.",
       });
 
-      router.push("/");
+      router.push("/chat");
     } catch (error) {
       const err = error as AxiosError<{ message?: string }>;
       console.error("Erreur login:", err);

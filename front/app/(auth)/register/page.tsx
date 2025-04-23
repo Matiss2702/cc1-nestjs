@@ -52,9 +52,7 @@ export default function Register() {
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      console.log("Envoi de:", data);
-      const res = await api.post("/auth/register", data);
-      console.log("Réponse:", res.data);
+      await api.post("/auth/register", data);
 
       toast("Inscription réussie 🎉", {
         description: "Vous pouvez maintenant vous connecter.",
