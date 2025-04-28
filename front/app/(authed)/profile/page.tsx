@@ -1,95 +1,140 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { AxiosError } from "axios"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+
 import { authContext } from "@/context/authContext"
 import api from "@/lib/api"
 import React from "react"
+
+const formSchema = z.object({
+  email: z.string().email({ message: "Email invalide" }),
+  username: z.string().min(3, { message: "Minimum 3 caractères" }),
+  color: z.string().optional(),
+})
 
 export default function ProfilePage() {
   const { user, setUser } = React.useContext(authContext)
   const router = useRouter()
 
-  const [username, setUsername] = useState(user?.username || "")
-  const [email, setEmail] = useState(user?.email || "")
-  const [color, setColor] = useState(user?.color || "#ffffff")
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      username: "",
+      color: "#ffffff",
+    },
+  })
 
   useEffect(() => {
     if (!user) {
       router.push("/login")
+      return
     }
-  }, [user, router])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    form.reset({
+      email: user.email || "",
+      username: user.username || "",
+      color: user.color || "#ffffff",
+    })
+  }, [user, router, form])
 
-    const updatedProfile = { username, email, color }
+  const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+    if (!user) return
 
     try {
-
-      const response = await api.put(`/users/${user?.id}`, updatedProfile)
-
+      const response = await api.put(`/users/${user.id}`, data)
       setUser({ ...user, ...response.data })
 
-      toast.success("Profil mis à jour !")
+      toast("Profil mis à jour 🎉", {
+        description: "Vos informations ont été enregistrées.",
+      })
     } catch (error) {
+      const err = error as AxiosError<{ message?: string }>
+      console.error("Erreur update profil:", err)
 
-      console.error(error)
-      toast.error("Erreur lors de la mise à jour du profil.")
+      toast("Erreur lors de la mise à jour ❌", {
+        description: err.response?.data?.message || "Une erreur inconnue s'est produite.",
+      })
     }
   }
 
   return (
-    <div className="profile-page p-4 max-w-md mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">Mon Profil</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-            Nom d'utilisateur
-          </label>
-          <Input
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            className="mt-1"
-          />
-        </div>
+    <div className="flex h-screen items-center justify-center">
+      <Card className="w-[400px]">
+        <CardHeader>
+          <CardTitle className="text-2xl">Mon Profil</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nom d&apos;utilisateur</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="mt-1"
-          />
-        </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div>
-          <label htmlFor="color" className="block text-sm font-medium text-gray-700">
-            Couleur personnalisée
-          </label>
-          <Input
-            id="color"
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="mt-1"
-          />
-        </div>
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Couleur de profil</FormLabel>
+                    <FormControl>
+                      <Input type="color" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <Button type="submit" className="w-full mt-4">
-          Mettre à jour
-        </Button>
-      </form>
+              <Button type="submit" className="w-full">
+                Mettre à jour
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter></CardFooter>
+      </Card>
     </div>
   )
 }
