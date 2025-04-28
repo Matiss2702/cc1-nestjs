@@ -7,6 +7,7 @@ import { ChevronsUpDown, LogOut } from "lucide-react";
 import { authContext } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { User } from "@/types/user";
+import Link from "next/link";
 
 export default function SidebarUser({userData} : {userData: User}) {
   const { isMobile } = useSidebar()
@@ -58,7 +59,7 @@ export default function SidebarUser({userData} : {userData: User}) {
             sideOffset={4}
           >
             <DropdownMenuItem>
-              Profile
+            <Link href="/profile">Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
